@@ -27,16 +27,19 @@ app = Flask(__name__)
 
 CORS(app) 
 
-client = MongoClient("mongodb+srv://gowdish2005:gPYAiBVa9dSyd5ge@cluster0.3fier.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",ssl=True,
-    tls=True,
-    tlsAllowInvalidCertificates=True)
-db = client["event_db"]
-collection = db["registrations"]
-hall_collections = {
+MONGO_URI ="mongodb+srv://gowdish2005:gPYAiBVa9dSyd5ge@cluster0.3fier.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+try:
+    client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+    db = client["event_db"]
+    collection = db["registrations"]
+    hall_collections = {
     "Seminar Hall 1": db["seminar_hall_1"],
     "Seminar Hall 2": db["seminar_hall_2"],
     "Seminar Hall 3": db["seminar_hall_3"]
-}
+    }
+    print("✅ MongoDB connected successfully!")
+except Exception as e:
+    print("❌ MongoDB connection failed:", e)
 
 
 COORDINATOR_EMAIL = "coordinator@example.com"  # Replace with actual coordinator email
@@ -538,8 +541,7 @@ def image():
         return "Image uploaded successfully!", 200
     except Exception as e:
         return str(e), 500
-
 if __name__ == "__main__":
-    app.run(debug=True, port=5001)
+    app.run(debug=True, host="0.0.0.0", port=5000)
 
 
