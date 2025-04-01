@@ -22,7 +22,7 @@ from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
-CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}}, supports_credentials=True)
+CORS(app, resources={r"/*": {"origins": "https://seminar-hall-b828d.web.app"}}, supports_credentials=True)
 app = Flask(__name__)
 
 CORS(app) 
