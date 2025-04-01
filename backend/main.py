@@ -27,7 +27,7 @@ app = Flask(__name__)
 
 CORS(app) 
 
-client = MongoClient("mongodb://localhost:27017/")
+client = MongoClient("mongodb+srv://knowlegdeguidefu630:CONdbswsmgOFFGCc@cluster0.3fier.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
 db = client["event_db"]
 collection = db["registrations"]
 hall_collections = {
