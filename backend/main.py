@@ -27,7 +27,7 @@ app = Flask(__name__)
 
 CORS(app) 
 
-MONGO_URI ="mongodb+srv://gowdish2005:gPYAiBVa9dSyd5ge@cluster0.3fier.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+MONGO_URI ="mongodb+srv://gowdish2005:gPYAiBVa9dSyd5ge@cluster0.3fier.mongodb.net/?retryWrites=true&w=majority&tls=true"
 try:
     client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
     db = client["event_db"]
