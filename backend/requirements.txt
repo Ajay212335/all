@@ -9,4 +9,4 @@ Werkzeug
 email-validator
 uvicorn
 gunicorn
-
+certifi
