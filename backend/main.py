@@ -24,7 +24,7 @@ app = Flask(__name__)
 
 CORS(app, resources={r"/*": {"origins": "https://seminar-hall-b828d.web.app"}}, supports_credentials=True)
 app = Flask(__name__)
-
+CORS(app)
 
 MONGO_URI = "mongodb+srv://gowdish2005:gPYAiBVa9dSyd5ge@cluster0.3fier.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 
