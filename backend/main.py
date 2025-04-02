@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify,send_from_directory
 from flask_cors import CORS
 from pymongo import MongoClient
+import certifi
 import smtplib
 from email.message import EmailMessage
 from bson import ObjectId
@@ -26,26 +27,22 @@ CORS(app, resources={r"/*": {"origins": "https://seminar-hall-b828d.web.app"}}, 
 app = Flask(__name__)
 CORS(app)
 
-MONGO_URI = "mongodb+srv://gowdish2005:gPYAiBVa9dSyd5ge@cluster0.3fier.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+
+MONGO_URI = "mongodb+srv://gowdish2005:gPYAiBVa9dSyd5ge@cluster0.3fier.mongodb.net/?retryWrites=true&w=majority"
 
 try:
-    # Establish connection with a timeout
-    client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
-    
-    # Select database
-    db = client["event_db"]
-
-    # Define collections
-    collections = {
-        "registrations": db["registrations"],
+    client = pymongo.MongoClient(MONGO_URI, tlsCAFile=certifi.where())
+    db = client.get_database("event_db")
+    collection = db["registrations"]
+    hall_collections = {
         "Seminar Hall 1": db["seminar_hall_1"],
         "Seminar Hall 2": db["seminar_hall_2"],
         "Seminar Hall 3": db["seminar_hall_3"]
     }
-
     print("✅ MongoDB connected successfully!")
 except Exception as e:
     print("❌ MongoDB connection failed:", e)
+
 
 
 COORDINATOR_EMAIL = "coordinator@example.com"  # Replace with actual coordinator email
