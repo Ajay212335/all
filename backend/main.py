@@ -28,7 +28,8 @@ app = Flask(__name__)
 CORS(app)
 
 
-MONGO_URI = "mongodb+srv://gowdish2005:gPYAiBVa9dSyd5ge@cluster0.3fier.mongodb.net/?retryWrites=true&w=majority"
+
+MONGO_URI = "mongodb+srv://ddarn3681:eyl349H2RkqaraZb@cluster0.ezhvpef.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 
 try:
     client = pymongo.MongoClient(MONGO_URI, tls=True, tlsCAFile=certifi.where())
