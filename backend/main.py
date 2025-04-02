@@ -495,7 +495,7 @@ def book_seminar():
         data["status"] = "pending"
         booking_id = hall_collections[selected_hall].insert_one(data).inserted_id
 
-        login_link = "http://localhost:5173/"
+        login_link = "https://seminar-hall-b828d.web.app/"
 
         products_html = ""
         if "products" in data and isinstance(data["products"], list):
