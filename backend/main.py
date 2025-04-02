@@ -25,24 +25,24 @@ app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "https://seminar-hall-b828d.web.app"}}, supports_credentials=True)
 app = Flask(__name__)
 
-CORS(app) 
 
-# Load credentials securely
-MONGO_USER = os.getenv("MONGO_USER")
-MONGO_PASS = os.getenv("MONGO_PASS")
-
-# Construct secure MongoDB URI
-MONGO_URI = f"mongodb+srv://{MONGO_USER}:{MONGO_PASS}@cluster0.3fier.mongodb.net/?retryWrites=true&w=majority&ssl=true&tlsAllowInvalidCertificates=true"
+MONGO_URI = "mongodb+srv://gowdish2005:gPYAiBVa9dSyd5ge@cluster0.3fier.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 
 try:
+    # Establish connection with a timeout
     client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+    
+    # Select database
     db = client["event_db"]
-    collection = db["registrations"]
-    hall_collections = {
-    "Seminar Hall 1": db["seminar_hall_1"],
-    "Seminar Hall 2": db["seminar_hall_2"],
-    "Seminar Hall 3": db["seminar_hall_3"]
+
+    # Define collections
+    collections = {
+        "registrations": db["registrations"],
+        "Seminar Hall 1": db["seminar_hall_1"],
+        "Seminar Hall 2": db["seminar_hall_2"],
+        "Seminar Hall 3": db["seminar_hall_3"]
     }
+
     print("✅ MongoDB connected successfully!")
 except Exception as e:
     print("❌ MongoDB connection failed:", e)
