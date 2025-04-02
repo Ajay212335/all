@@ -31,8 +31,7 @@ CORS(app)
 MONGO_URI = "mongodb+srv://gowdish2005:gPYAiBVa9dSyd5ge@cluster0.3fier.mongodb.net/?retryWrites=true&w=majority"
 
 try:
-    client = pymongo.MongoClient(MONGO_URI, tlsCAFile=certifi.where(), serverSelectionTimeoutMS=5000)
-    client.admin.command("ping")
+    client = pymongo.MongoClient(MONGO_URI, tls=True, tlsCAFile=certifi.where())
     db = client.get_database("event_db")
     collection = db["registrations"]
     hall_collections = {
