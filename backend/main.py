@@ -435,7 +435,7 @@ pending_bookings = {}
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 EMAIL_SENDER = "ajaiks2005@gmail.com" 
-EMAIL_PASSWORD = "zenc picd tkwb tewq"  
+EMAIL_PASSWORD = "pvxp uuvb fsap xqbb"  
 
 def send_email(to_email, subject, body):
     try:
