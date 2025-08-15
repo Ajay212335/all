@@ -169,11 +169,12 @@ def get_canceled_bookings():
         return jsonify({"error": str(e)}), 500
 
 def update_completed_bookings():
-    """Automatically updates approved bookings to 'Completed' if end time passed and sends email to coordinator."""
+    """Automatically updates all past approved bookings to 'Completed' and sends email."""
     try:
         current_time = datetime.now()
 
         for hall_name, collection in hall_collections.items():
+            # Fetch all bookings with status 'approved'
             bookings = list(collection.find({"status": "approved"}))
 
             for booking in bookings:
@@ -181,29 +182,26 @@ def update_completed_bookings():
                     booking["_id"] = str(booking["_id"])
 
                     booking_date_str = booking.get("Date")
-                    start_time_str = booking.get("TimeFrom")
                     end_time_str = booking.get("TimeTo")
 
-                    if not booking_date_str or not start_time_str or not end_time_str:
-                        print(f"⚠️ Skipping booking due to missing Date or Time: {booking}")
+                    if not booking_date_str or not end_time_str:
+                        print(f"⚠️ Skipping booking due to missing Date or TimeTo: {booking}")
                         continue
 
-                    # Parse date and time
+                    # Convert booking date and end time
                     booking_date = datetime.strptime(booking_date_str, "%Y-%m-%d")
-                    time_from = datetime.strptime(start_time_str, "%H:%M").time()
-                    time_to = datetime.strptime(end_time_str, "%H:%M").time()
-                    booking_end_datetime = datetime.combine(booking_date.date(), time_to)
-                    booking_start_datetime = datetime.combine(booking_date.date(), time_from)
+                    end_time = datetime.strptime(end_time_str, "%H:%M").time()
+                    booking_end_datetime = datetime.combine(booking_date.date(), end_time)
 
-                    # If current time is after end time, mark completed
-                    if current_time >= booking_end_datetime:
+                    # If booking end datetime is in the past, mark as completed
+                    if booking_end_datetime <= current_time:
                         collection.update_one(
                             {"_id": ObjectId(booking["_id"])},
                             {"$set": {"status": "Completed", "completedAt": current_time}}
                         )
-                        print(f"✅ Status updated to 'Completed' for booking: {booking}")
+                        print(f"✅ Booking marked as 'Completed': {booking}")
 
-                        # Send email to coordinator
+                        # Send email to coordinator to fill details
                         send_completed_booking_email(hall_name, booking)
 
                 except ValueError as e:
@@ -248,6 +246,7 @@ def send_completed_booking_email(selected_hall, booking):
 
     except Exception as e:
         print(f"❌ Error sending completion email: {e}")
+
 
         
 @app.route("/completed_bookings", methods=["GET"])
