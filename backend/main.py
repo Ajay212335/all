@@ -170,43 +170,27 @@ def get_canceled_bookings():
 
 
 def update_completed_bookings():
-    """Automatically mark all past approved bookings as 'Completed'."""
-    try:
-        current_time = datetime.now()
+    current_time = datetime.now()
+    for hall_name, collection in hall_collections.items():
+        bookings = list(collection.find({"status": "approved"}))
+        for booking in bookings:
+            booking_date_str = booking.get("Date")
+            time_to_str = booking.get("TimeTo")
+            if not booking_date_str or not time_to_str:
+                continue
+            try:
+                booking_date = datetime.strptime(booking_date_str, "%Y-%m-%d")
+                time_to = datetime.strptime(time_to_str, "%H:%M").time()
+                booking_end_datetime = datetime.combine(booking_date.date(), time_to)
+                if booking_end_datetime <= current_time:
+                    collection.update_one(
+                        {"_id": booking["_id"]},
+                        {"$set": {"status": "Completed", "completedAt": current_time}}
+                    )
+                    print(f"✅ Booking {booking['_id']} marked Completed")
+            except Exception as e:
+                print(f"❌ Error parsing booking datetime: {e}")
 
-        for hall_name, collection in hall_collections.items():
-            bookings = list(collection.find({"status": "approved"}))
-
-            for booking in bookings:
-                booking_date_str = booking.get("Date")
-                time_to_str = booking.get("TimeTo")
-
-                if not booking_date_str or not time_to_str:
-                    continue
-
-                try:
-                    booking_date = datetime.strptime(booking_date_str, "%Y-%m-%d")
-                    time_to = datetime.strptime(time_to_str, "%H:%M").time()
-                    booking_end_datetime = datetime.combine(booking_date.date(), time_to)
-
-                    if booking_end_datetime <= current_time:
-                        collection.update_one(
-                            {"_id": booking["_id"]},
-                            {"$set": {"status": "Completed", "completedAt": current_time}}
-                        )
-                        print(f"✅ Booking {booking['_id']} marked as Completed")
-
-                        # Optional: send email to coordinator
-                        # send_completed_booking_email(hall_name, booking)
-
-                except Exception as e:
-                    print(f"❌ Error parsing booking time: {e}")
-
-    except Exception as e:
-        print(f"🔥 Scheduler error: {e}")
-
-
-# Schedule the auto-update to run every 1 minute
 scheduler = BackgroundScheduler()
 scheduler.add_job(update_completed_bookings, "interval", minutes=1)
 scheduler.start()
