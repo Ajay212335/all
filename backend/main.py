@@ -241,6 +241,7 @@ def send_completed_booking_email(selected_hall, booking):
 
     except Exception as e:
         print(f"❌ Error sending completion email: {e}")
+        
 @app.route("/completed_bookings", methods=["GET"])
 def get_completed_bookings():
     try:
