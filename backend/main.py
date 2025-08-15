@@ -168,54 +168,48 @@ def get_canceled_bookings():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
 def update_completed_bookings():
-    """Automatically update approved bookings whose TimeTo has passed to Completed."""
+    """Automatically mark all past approved bookings as 'Completed'."""
     try:
         current_time = datetime.now()
 
         for hall_name, collection in hall_collections.items():
-            # Fetch all approved bookings
             bookings = list(collection.find({"status": "approved"}))
 
             for booking in bookings:
+                booking_date_str = booking.get("Date")
+                time_to_str = booking.get("TimeTo")
+
+                if not booking_date_str or not time_to_str:
+                    continue
+
                 try:
-                    booking["_id"] = str(booking["_id"])
-                    booking_date_str = booking.get("Date")
-                    end_time_str = booking.get("TimeTo")
-
-                    if not booking_date_str or not end_time_str:
-                        print(f"⚠️ Skipping booking due to missing Date or TimeTo: {booking}")
-                        continue
-
-                    # Parse date and end time
                     booking_date = datetime.strptime(booking_date_str, "%Y-%m-%d")
-                    end_time = datetime.strptime(end_time_str, "%H:%M").time()
-                    booking_end_datetime = datetime.combine(booking_date.date(), end_time)
+                    time_to = datetime.strptime(time_to_str, "%H:%M").time()
+                    booking_end_datetime = datetime.combine(booking_date.date(), time_to)
 
-                    # If booking end datetime is in the past, update status
                     if booking_end_datetime <= current_time:
                         collection.update_one(
-                            {"_id": ObjectId(booking["_id"])},
+                            {"_id": booking["_id"]},
                             {"$set": {"status": "Completed", "completedAt": current_time}}
                         )
-                        print(f"✅ Booking marked as 'Completed': {booking}")
+                        print(f"✅ Booking {booking['_id']} marked as Completed")
 
-                        # Send email to coordinator to fill details
-                        send_completed_booking_email(hall_name, booking)
+                        # Optional: send email to coordinator
+                        # send_completed_booking_email(hall_name, booking)
 
-                except ValueError as e:
-                    print(f"❌ Error parsing date/time: {e}")
                 except Exception as e:
-                    print(f"🔥 Unexpected error: {e}")
+                    print(f"❌ Error parsing booking time: {e}")
 
     except Exception as e:
-        print(f"🔥 Server error: {e}")
+        print(f"🔥 Scheduler error: {e}")
 
 
+# Schedule the auto-update to run every 1 minute
 scheduler = BackgroundScheduler()
-scheduler.add_job(func=update_completed_bookings, trigger="interval", minutes=10)
+scheduler.add_job(update_completed_bookings, "interval", minutes=1)
 scheduler.start()
-
 
 
 def send_completed_booking_email(selected_hall, booking):
