@@ -169,18 +169,17 @@ def get_canceled_bookings():
         return jsonify({"error": str(e)}), 500
 
 def update_completed_bookings():
-    """Automatically updates all past approved bookings to 'Completed' and sends email."""
+    """Automatically update approved bookings whose TimeTo has passed to Completed."""
     try:
         current_time = datetime.now()
 
         for hall_name, collection in hall_collections.items():
-            # Fetch all bookings with status 'approved'
+            # Fetch all approved bookings
             bookings = list(collection.find({"status": "approved"}))
 
             for booking in bookings:
                 try:
                     booking["_id"] = str(booking["_id"])
-
                     booking_date_str = booking.get("Date")
                     end_time_str = booking.get("TimeTo")
 
@@ -188,12 +187,12 @@ def update_completed_bookings():
                         print(f"⚠️ Skipping booking due to missing Date or TimeTo: {booking}")
                         continue
 
-                    # Convert booking date and end time
+                    # Parse date and end time
                     booking_date = datetime.strptime(booking_date_str, "%Y-%m-%d")
                     end_time = datetime.strptime(end_time_str, "%H:%M").time()
                     booking_end_datetime = datetime.combine(booking_date.date(), end_time)
 
-                    # If booking end datetime is in the past, mark as completed
+                    # If booking end datetime is in the past, update status
                     if booking_end_datetime <= current_time:
                         collection.update_one(
                             {"_id": ObjectId(booking["_id"])},
@@ -213,8 +212,14 @@ def update_completed_bookings():
         print(f"🔥 Server error: {e}")
 
 
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=update_completed_bookings, trigger="interval", minutes=10)
+scheduler.start()
+
+
+
 def send_completed_booking_email(selected_hall, booking):
-    """Sends email to coordinator to upload extra details after booking completion."""
+    """Send email to coordinator to upload extra details after booking completion."""
     try:
         coordinator_email = booking.get("CoordinatorEmail")
         if not coordinator_email:
@@ -226,26 +231,19 @@ def send_completed_booking_email(selected_hall, booking):
         <p><strong>Coordinator Name:</strong> {booking.get("CoordinatorName", "N/A")}</p>
         <p><strong>Department:</strong> {booking.get("Department", "N/A")}</p>
         <p><strong>Event Name:</strong> {booking.get("EventName", "N/A")}</p>
-        <p><strong>Total Participants:</strong> {booking.get("TotalParticipants", "N/A")}</p>
         <p><strong>Seminar Hall:</strong> {selected_hall}</p>
         <p><strong>Date:</strong> {booking.get("Date", "N/A")}</p>
         <p><strong>Time:</strong> {booking.get("TimeFrom", "N/A")} - {booking.get("TimeTo", "N/A")}</p>
-        <p><strong>Coordinator Email:</strong> {coordinator_email}</p>
-        <p><strong>Coordinator Phone:</strong> {booking.get("CoordinatorPhone", "N/A")}</p>
-        <p><strong>Organized By:</strong> {booking.get("OrganizedBy", "N/A")}</p>
-        <p><strong>Action Required:</strong> Please upload photos, geotag, and event document within 1 day to complete the booking record.</p>
+        <p><strong>Action Required:</strong> Please upload photos, geotag, and event document within 1 day to complete the record.</p>
         <p>Upload Link: <a href="http://your-frontend-url.com/upload_details">Click here to upload</a></p>
         """
 
-        recipients = [coordinator_email]
-
-        for recipient in recipients:
-            send_email(recipient, subject, email_body)
-
-        print(f"📧 Email sent to: {recipients}")
+        send_email(coordinator_email, subject, email_body)
+        print(f"📧 Email sent to coordinator: {coordinator_email}")
 
     except Exception as e:
         print(f"❌ Error sending completion email: {e}")
+
 
 
         
