@@ -169,7 +169,7 @@ def get_canceled_bookings():
         return jsonify({"error": str(e)}), 500
 
 def update_completed_bookings():
-    """Automatically updates completed seminar hall bookings and sends emails."""
+    """Automatically updates approved bookings to 'Completed' if end time passed and sends email to coordinator."""
     try:
         current_time = datetime.now()
 
@@ -178,29 +178,32 @@ def update_completed_bookings():
 
             for booking in bookings:
                 try:
-                    booking["_id"] = str(booking["_id"])  # Convert ObjectId to string
+                    booking["_id"] = str(booking["_id"])
 
                     booking_date_str = booking.get("Date")
+                    start_time_str = booking.get("TimeFrom")
                     end_time_str = booking.get("TimeTo")
 
-                    if not booking_date_str or not end_time_str:
-                        print(f"⚠️ Skipping booking due to missing Date or TimeTo: {booking}")
+                    if not booking_date_str or not start_time_str or not end_time_str:
+                        print(f"⚠️ Skipping booking due to missing Date or Time: {booking}")
                         continue
 
-                    # Convert booking date and time correctly
+                    # Parse date and time
                     booking_date = datetime.strptime(booking_date_str, "%Y-%m-%d")
-                    end_time = datetime.strptime(end_time_str, "%H:%M")
-                    booking_end_datetime = datetime.combine(booking_date.date(), end_time.time())
+                    time_from = datetime.strptime(start_time_str, "%H:%M").time()
+                    time_to = datetime.strptime(end_time_str, "%H:%M").time()
+                    booking_end_datetime = datetime.combine(booking_date.date(), time_to)
+                    booking_start_datetime = datetime.combine(booking_date.date(), time_from)
 
-                    if booking_end_datetime < current_time:
-                        # Update status to 'Completed'
+                    # If current time is after end time, mark completed
+                    if current_time >= booking_end_datetime:
                         collection.update_one(
                             {"_id": ObjectId(booking["_id"])},
-                            {"$set": {"status": "Completed"}}
+                            {"$set": {"status": "Completed", "completedAt": current_time}}
                         )
                         print(f"✅ Status updated to 'Completed' for booking: {booking}")
 
-                        # Send automatic email for completed booking
+                        # Send email to coordinator
                         send_completed_booking_email(hall_name, booking)
 
                 except ValueError as e:
@@ -213,13 +216,15 @@ def update_completed_bookings():
 
 
 def send_completed_booking_email(selected_hall, booking):
-    """Sends an automatic email when a seminar hall booking is marked as 'Completed'."""
+    """Sends email to coordinator to upload extra details after booking completion."""
     try:
         coordinator_email = booking.get("CoordinatorEmail")
+        if not coordinator_email:
+            return
 
         subject = f"Seminar Hall Booking Completed - {selected_hall}"
         email_body = f"""
-        <h2>Your seminar hall booking has been successfully completed.</h2>
+        <h2>Your seminar hall booking has been completed.</h2>
         <p><strong>Coordinator Name:</strong> {booking.get("CoordinatorName", "N/A")}</p>
         <p><strong>Department:</strong> {booking.get("Department", "N/A")}</p>
         <p><strong>Event Name:</strong> {booking.get("EventName", "N/A")}</p>
@@ -230,17 +235,20 @@ def send_completed_booking_email(selected_hall, booking):
         <p><strong>Coordinator Email:</strong> {coordinator_email}</p>
         <p><strong>Coordinator Phone:</strong> {booking.get("CoordinatorPhone", "N/A")}</p>
         <p><strong>Organized By:</strong> {booking.get("OrganizedBy", "N/A")}</p>
+        <p><strong>Action Required:</strong> Please upload photos, geotag, and event document within 1 day to complete the booking record.</p>
+        <p>Upload Link: <a href="http://your-frontend-url.com/upload_details">Click here to upload</a></p>
         """
 
-        recipients = [coordinator_email, "yuthikam2005@gmail.com", "sahanamagesh72@gmail.com", "darav4852@gmail.com"]
+        recipients = [coordinator_email]
 
         for recipient in recipients:
             send_email(recipient, subject, email_body)
 
-        print(f"📧 Automatic completion email sent to: {recipients}")
+        print(f"📧 Email sent to: {recipients}")
 
     except Exception as e:
         print(f"❌ Error sending completion email: {e}")
+
         
 @app.route("/completed_bookings", methods=["GET"])
 def get_completed_bookings():
