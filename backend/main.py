@@ -241,29 +241,18 @@ def send_completed_booking_email(selected_hall, booking):
 
     except Exception as e:
         print(f"❌ Error sending completion email: {e}")
-
 @app.route("/completed_bookings", methods=["GET"])
 def get_completed_bookings():
     try:
         completed_bookings = {}
-
         for hall_name, collection in hall_collections.items():
             bookings = list(collection.find({"status": "Completed"}))
-
             for booking in bookings:
                 booking["_id"] = str(booking["_id"])
-
-            completed_bookings[hall_name] = bookings  
-
+            completed_bookings[hall_name] = bookings
         return jsonify(completed_bookings)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-UPLOAD_FOLDER = "uploads"
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
 
 @app.route("/upload_details", methods=["POST"])
 def upload_details():
@@ -271,9 +260,12 @@ def upload_details():
         booking_id = request.form.get("bookingId")
         hall_name = request.form.get("hallName")
         extra_details = request.form.get("extraDetails")
-        image_file = request.files.get("image")
 
-        if not (booking_id and hall_name and extra_details and image_file):
+        photo_file = request.files.get("photo")
+        geotag_file = request.files.get("geotagPhoto")
+        event_doc_file = request.files.get("eventDoc")
+
+        if not (booking_id and hall_name and extra_details and photo_file and geotag_file and event_doc_file):
             return jsonify({"success": False, "message": "Missing required fields"}), 400
 
         if hall_name not in hall_collections:
@@ -281,9 +273,15 @@ def upload_details():
 
         collection = hall_collections[hall_name]
 
-        filename = secure_filename(image_file.filename)
-        image_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-        image_file.save(image_path)
+        # Save files
+        photo_filename = secure_filename(photo_file.filename)
+        photo_file.save(os.path.join(app.config["UPLOAD_FOLDER"], photo_filename))
+
+        geotag_filename = secure_filename(geotag_file.filename)
+        geotag_file.save(os.path.join(app.config["UPLOAD_FOLDER"], geotag_filename))
+
+        doc_filename = secure_filename(event_doc_file.filename)
+        event_doc_file.save(os.path.join(app.config["UPLOAD_FOLDER"], doc_filename))
 
         try:
             booking_object_id = ObjectId(booking_id)
@@ -295,7 +293,9 @@ def upload_details():
             {"$set": {
                 "status": "Total Completed",
                 "extraDetails": extra_details,
-                "imagePath": filename 
+                "photoPath": photo_filename,
+                "geotagPhotoPath": geotag_filename,
+                "eventDocPath": doc_filename
             }}
         )
 
@@ -309,7 +309,7 @@ def upload_details():
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
-    return send_from_directory("uploads", filename)
+    return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
 @app.route("/total_completed_bookings", methods=["GET"])
 def get_total_completed_bookings():
