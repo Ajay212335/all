@@ -367,7 +367,6 @@ def get_total_completed_bookings():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-correct this code for the correct path and the two image and 1 pdf contant 
 
     
 @app.route("/bookings", methods=["GET"])
