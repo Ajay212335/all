@@ -379,13 +379,6 @@ def get_total_completed_bookings():
         return jsonify({"error": str(e)}), 500
 
 
-# Serve uploaded files (images + PDFs)
-@app.route("/uploads/<filename>")
-def uploaded_file(filename):
-    return send_from_directory("uploads", filename)
-
-
-
     
 @app.route("/bookings", methods=["GET"])
 def get_all_bookings():
