@@ -238,7 +238,6 @@ def get_completed_bookings():
         return jsonify(completed_bookings)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 @app.route("/upload_details", methods=["POST"])
 def upload_details():
     try:
@@ -250,31 +249,34 @@ def upload_details():
         geotag_file = request.files.get("geotagPhoto")
         event_doc_file = request.files.get("eventDoc")
 
-        # Debug logs (will show in Render logs)
+        # Debug log (will show in Render logs)
         print("---- DEBUG /upload_details ----")
         print("bookingId received:", booking_id)
-
         print("hall_name:", hall_name)
         print("extra_details:", extra_details)
         print("files:", request.files.keys())
         print("hall_collections keys:", list(hall_collections.keys()))
         print("------------------------------")
-if not booking_id:
-    return jsonify({"success": False, "message": "Booking ID missing"}), 400
-if not hall_name:
-    return jsonify({"success": False, "message": "Hall name missing"}), 400
-if not extra_details:
-    return jsonify({"success": False, "message": "Extra details missing"}), 400
-if not photo_file:
-    return jsonify({"success": False, "message": "Photo file missing"}), 400
-if not geotag_file:
-    return jsonify({"success": False, "message": "Geotag photo missing"}), 400
-if not event_doc_file:
-    return jsonify({"success": False, "message": "Event doc missing"}), 400
 
+        # ✅ Validation checks
+        if not booking_id:
+            return jsonify({"success": False, "message": "Booking ID missing"}), 400
+        if not hall_name:
+            return jsonify({"success": False, "message": "Hall name missing"}), 400
+        if not extra_details:
+            return jsonify({"success": False, "message": "Extra details missing"}), 400
+        if not photo_file:
+            return jsonify({"success": False, "message": "Photo file missing"}), 400
+        if not geotag_file:
+            return jsonify({"success": False, "message": "Geotag photo missing"}), 400
+        if not event_doc_file:
+            return jsonify({"success": False, "message": "Event doc missing"}), 400
+
+        # ✅ Check hall collection exists
         if hall_name not in hall_collections:
             return jsonify({"success": False, "message": f"Invalid seminar hall: {hall_name}"}), 400
 
+        # ✅ Save uploaded files
         os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
         photo_filename = secure_filename(photo_file.filename)
@@ -285,14 +287,19 @@ if not event_doc_file:
         geotag_file.save(os.path.join(app.config["UPLOAD_FOLDER"], geotag_filename))
         event_doc_file.save(os.path.join(app.config["UPLOAD_FOLDER"], doc_filename))
 
+        # ✅ Validate bookingId is a valid ObjectId
         try:
             booking_object_id = ObjectId(booking_id)
         except Exception as e:
             return jsonify({"success": False, "message": "Invalid booking ID", "error": str(e)}), 400
 
+        # ✅ Update booking in DB
         collection = hall_collections[hall_name]
         if not collection:
-            return jsonify({"success": True, "message": "Files uploaded, but no DB collection linked (hall_collections not set)"}), 200
+            return jsonify({
+                "success": True,
+                "message": "Files uploaded, but no DB collection linked (hall_collections not set)"
+            }), 200
 
         update_result = collection.update_one(
             {"_id": booking_object_id},
@@ -308,14 +315,12 @@ if not event_doc_file:
         if update_result.modified_count == 0:
             return jsonify({"success": False, "message": "Booking not found or update failed"}), 500
 
-
-
-
         return jsonify({"success": True, "message": "Details uploaded and status updated successfully!"})
 
     except Exception as e:
         print("ERROR in /upload_details:", str(e))
         return jsonify({"success": False, "error": str(e)}), 500
+
 
 
 @app.route("/uploads/<filename>")
