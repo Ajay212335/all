@@ -353,12 +353,23 @@ def get_total_completed_bookings():
             bookings = list(collection.find({"status": "Total Completed"}))
 
             for booking in bookings:
-                booking["_id"] = str(booking["_id"]) 
+                booking["_id"] = str(booking["_id"])
 
-                if "imagePath" in booking and booking["imagePath"]:
-                    booking["imagePath"] = f"http://127.0.0.1:5000/uploads/{booking['imagePath']}"
+                # Ensure all media paths (2 images + 1 PDF) are correctly formatted
+                if "imagePath1" in booking and booking["imagePath1"]:
+                    booking["imagePath1"] = f"http://127.0.0.1:5000/uploads/{booking['imagePath1']}"
                 else:
-                    booking["imagePath"] = None 
+                    booking["imagePath1"] = None
+
+                if "imagePath2" in booking and booking["imagePath2"]:
+                    booking["imagePath2"] = f"http://127.0.0.1:5000/uploads/{booking['imagePath2']}"
+                else:
+                    booking["imagePath2"] = None
+
+                if "pdfPath" in booking and booking["pdfPath"]:
+                    booking["pdfPath"] = f"http://127.0.0.1:5000/uploads/{booking['pdfPath']}"
+                else:
+                    booking["pdfPath"] = None
 
             total_completed_bookings[hall_name] = bookings
 
@@ -366,6 +377,13 @@ def get_total_completed_bookings():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+# Serve uploaded files (images + PDFs)
+@app.route("/uploads/<filename>")
+def uploaded_file(filename):
+    return send_from_directory("uploads", filename)
+
 
 
     
