@@ -341,7 +341,7 @@ def upload_details():
 # ✅ Serve uploaded files
 @app.route("/uploads/<filename>")
 def uploaded_file(filename):
-    return send_from_directory(app.config["UPLOAD_FOLDER"], filena
+    return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
 @app.route("/total_completed_bookings", methods=["GET"])
 def get_total_completed_bookings():
