@@ -239,6 +239,8 @@ def get_completed_bookings():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+app.config["UPLOAD_FOLDER"] = os.path.join(os.getcwd(), "uploads")
+
 @app.route("/upload_details", methods=["POST"])
 def upload_details():
     try:
@@ -250,7 +252,7 @@ def upload_details():
         geotag_file = request.files.get("geotagPhoto")
         event_doc_file = request.files.get("eventDoc")
 
-        # Debug log (will show in Render logs)
+        # Debug log
         print("---- DEBUG /upload_details ----")
         print("bookingId received:", booking_id)
         print("hall_name:", hall_name)
@@ -288,9 +290,19 @@ def upload_details():
         geotag_filename = secure_filename(geotag_file.filename)
         doc_filename = secure_filename(event_doc_file.filename)
 
-        photo_file.save(os.path.join(app.config["UPLOAD_FOLDER"], photo_filename))
-        geotag_file.save(os.path.join(app.config["UPLOAD_FOLDER"], geotag_filename))
-        event_doc_file.save(os.path.join(app.config["UPLOAD_FOLDER"], doc_filename))
+        photo_path = os.path.join(app.config["UPLOAD_FOLDER"], photo_filename)
+        geotag_path = os.path.join(app.config["UPLOAD_FOLDER"], geotag_filename)
+        doc_path = os.path.join(app.config["UPLOAD_FOLDER"], doc_filename)
+
+        photo_file.save(photo_path)
+        geotag_file.save(geotag_path)
+        event_doc_file.save(doc_path)
+
+        # ✅ Generate accessible URLs
+        server_url = request.host_url.rstrip("/")  # e.g. http://localhost:5000
+        photo_url = f"{server_url}/uploads/{photo_filename}"
+        geotag_url = f"{server_url}/uploads/{geotag_filename}"
+        doc_url = f"{server_url}/uploads/{doc_filename}"
 
         # ✅ Validate bookingId is a valid ObjectId
         try:
@@ -304,24 +316,32 @@ def upload_details():
             {"$set": {
                 "status": "Total Completed",
                 "extraDetails": extra_details,
-                "photoPath": photo_filename,
-                "geotagPhotoPath": geotag_filename,
-                "eventDocPath": doc_filename
+                "photo": photo_url,
+                "geotagPhoto": geotag_url,
+                "eventDoc": doc_url
             }}
         )
 
         if update_result.modified_count == 0:
             return jsonify({"success": False, "message": "Booking not found or update failed"}), 500
 
-        return jsonify({"success": True, "message": "Details uploaded and status updated successfully!"})
+        return jsonify({
+            "success": True,
+            "message": "Details uploaded and status updated successfully!",
+            "photo": photo_url,
+            "geotagPhoto": geotag_url,
+            "eventDoc": doc_url
+        })
 
     except Exception as e:
         print("ERROR in /upload_details:", str(e))
         return jsonify({"success": False, "error": str(e)}), 500
 
+
+# ✅ Serve uploaded files
 @app.route("/uploads/<filename>")
 def uploaded_file(filename):
-    return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
+    return send_from_directory(app.config["UPLOAD_FOLDER"], filena
 
 @app.route("/total_completed_bookings", methods=["GET"])
 def get_total_completed_bookings():
