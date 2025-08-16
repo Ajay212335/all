@@ -250,19 +250,23 @@ def upload_details():
         geotag_file = request.files.get("geotagPhoto")
         event_doc_file = request.files.get("eventDoc")
 
-        print("DEBUG booking_id:", booking_id)
-        print("DEBUG hall_name:", hall_name)
-        print("DEBUG extra_details:", extra_details)
-        print("DEBUG uploaded files:", request.files.keys())
+        # Debug logs (will show in Render logs)
+        print("---- DEBUG /upload_details ----")
+        print("booking_id:", booking_id)
+        print("hall_name:", hall_name)
+        print("extra_details:", extra_details)
+        print("files:", request.files.keys())
+        print("hall_collections keys:", list(hall_collections.keys()))
+        print("------------------------------")
 
-        # Validation
         if not (booking_id and hall_name and extra_details and photo_file and geotag_file and event_doc_file):
             return jsonify({"success": False, "message": "Missing required fields"}), 400
 
         if hall_name not in hall_collections:
-            return jsonify({"success": False, "message": "Invalid seminar hall"}), 400
+            return jsonify({"success": False, "message": f"Invalid seminar hall: {hall_name}"}), 400
 
-        # Save files
+        os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+
         photo_filename = secure_filename(photo_file.filename)
         geotag_filename = secure_filename(geotag_file.filename)
         doc_filename = secure_filename(event_doc_file.filename)
@@ -271,34 +275,35 @@ def upload_details():
         geotag_file.save(os.path.join(app.config["UPLOAD_FOLDER"], geotag_filename))
         event_doc_file.save(os.path.join(app.config["UPLOAD_FOLDER"], doc_filename))
 
-        # Convert bookingId to ObjectId
         try:
             booking_object_id = ObjectId(booking_id)
         except Exception as e:
             return jsonify({"success": False, "message": "Invalid booking ID", "error": str(e)}), 400
 
-        # Example DB update (replace with actual Mongo update)
         collection = hall_collections[hall_name]
-        if collection:  
-            update_result = collection.update_one(
-                {"_id": booking_object_id},
-                {"$set": {
-                    "status": "Total Completed",
-                    "extraDetails": extra_details,
-                    "photoPath": photo_filename,
-                    "geotagPhotoPath": geotag_filename,
-                    "eventDocPath": doc_filename
-                }}
-            )
+        if not collection:
+            return jsonify({"success": True, "message": "Files uploaded, but no DB collection linked (hall_collections not set)"}), 200
 
-            if update_result.modified_count == 0:
-                return jsonify({"success": False, "message": "Booking not found or update failed"}), 500
+        update_result = collection.update_one(
+            {"_id": booking_object_id},
+            {"$set": {
+                "status": "Total Completed",
+                "extraDetails": extra_details,
+                "photoPath": photo_filename,
+                "geotagPhotoPath": geotag_filename,
+                "eventDocPath": doc_filename
+            }}
+        )
+
+        if update_result.modified_count == 0:
+            return jsonify({"success": False, "message": "Booking not found or update failed"}), 500
 
         return jsonify({"success": True, "message": "Details uploaded and status updated successfully!"})
 
     except Exception as e:
         print("ERROR in /upload_details:", str(e))
         return jsonify({"success": False, "error": str(e)}), 500
+
 
 @app.route("/uploads/<filename>")
 def uploaded_file(filename):
