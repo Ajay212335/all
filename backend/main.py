@@ -259,9 +259,18 @@ def upload_details():
         print("files:", request.files.keys())
         print("hall_collections keys:", list(hall_collections.keys()))
         print("------------------------------")
-
-        if not (booking_id and hall_name and extra_details and photo_file and geotag_file and event_doc_file):
-            return jsonify({"success": False, "message": "Missing required fields"}), 400
+if not booking_id:
+    return jsonify({"success": False, "message": "Booking ID missing"}), 400
+if not hall_name:
+    return jsonify({"success": False, "message": "Hall name missing"}), 400
+if not extra_details:
+    return jsonify({"success": False, "message": "Extra details missing"}), 400
+if not photo_file:
+    return jsonify({"success": False, "message": "Photo file missing"}), 400
+if not geotag_file:
+    return jsonify({"success": False, "message": "Geotag photo missing"}), 400
+if not event_doc_file:
+    return jsonify({"success": False, "message": "Event doc missing"}), 400
 
         if hall_name not in hall_collections:
             return jsonify({"success": False, "message": f"Invalid seminar hall: {hall_name}"}), 400
@@ -298,18 +307,8 @@ def upload_details():
 
         if update_result.modified_count == 0:
             return jsonify({"success": False, "message": "Booking not found or update failed"}), 500
-        if not booking_id:
-    return jsonify({"success": False, "message": "Booking ID missing"}), 400
-if not hall_name:
-    return jsonify({"success": False, "message": "Hall name missing"}), 400
-if not extra_details:
-    return jsonify({"success": False, "message": "Extra details missing"}), 400
-if not photo_file:
-    return jsonify({"success": False, "message": "Photo file missing"}), 400
-if not geotag_file:
-    return jsonify({"success": False, "message": "Geotag photo missing"}), 400
-if not event_doc_file:
-    return jsonify({"success": False, "message": "Event doc missing"}), 400
+
+
 
 
         return jsonify({"success": True, "message": "Details uploaded and status updated successfully!"})
