@@ -238,6 +238,7 @@ def get_completed_bookings():
         return jsonify(completed_bookings)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 @app.route("/upload_details", methods=["POST"])
 def upload_details():
     try:
@@ -276,6 +277,10 @@ def upload_details():
         if hall_name not in hall_collections:
             return jsonify({"success": False, "message": f"Invalid seminar hall: {hall_name}"}), 400
 
+        collection = hall_collections[hall_name]
+        if collection is None:
+            return jsonify({"success": False, "message": "No DB collection linked for this hall"}), 400
+
         # ✅ Save uploaded files
         os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
@@ -294,23 +299,6 @@ def upload_details():
             return jsonify({"success": False, "message": "Invalid booking ID", "error": str(e)}), 400
 
         # ✅ Update booking in DB
-        collection = hall_collections[hall_name]
-        if collection is not None:
-    # proceed with your logic
-            result = collection.update_one(
-                {"_id": ObjectId(bookingId)},
-                {"$set": {
-                    "extra_details": extra_details,
-                    "photo": photo_filename,
-                    "geotagPhoto": geotag_filename,
-                    "eventDoc": eventdoc_filename
-                }}
-            )
-    return jsonify({"message": "Details uploaded successfully"})
-else:
-    return jsonify({"error": "Invalid hall name"}), 400
-
-
         update_result = collection.update_one(
             {"_id": booking_object_id},
             {"$set": {
@@ -330,8 +318,6 @@ else:
     except Exception as e:
         print("ERROR in /upload_details:", str(e))
         return jsonify({"success": False, "error": str(e)}), 500
-
-
 
 @app.route("/uploads/<filename>")
 def uploaded_file(filename):
