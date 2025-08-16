@@ -352,12 +352,25 @@ def get_total_completed_bookings():
             bookings = list(collection.find({"status": "Total Completed"}))
 
             for booking in bookings:
-                booking["_id"] = str(booking["_id"]) 
+                booking["_id"] = str(booking["_id"])
 
-                if "imagePath" in booking and booking["imagePath"]:
-                    booking["imagePath"] = f"http://127.0.0.1:5000/uploads/{booking['imagePath']}"
+                # Event Photo
+                if "photo" in booking and booking["photo"]:
+                    booking["photo"] = f"http://127.0.0.1:5000/uploads/{booking['photo']}"
                 else:
-                    booking["imagePath"] = None 
+                    booking["photo"] = None  
+
+                # Geo-tagged Photo
+                if "geoTaggedPhoto" in booking and booking["geoTaggedPhoto"]:
+                    booking["geoTaggedPhoto"] = f"http://127.0.0.1:5000/uploads/{booking['geoTaggedPhoto']}"
+                else:
+                    booking["geoTaggedPhoto"] = None  
+
+                # Event Document (PDF)
+                if "eventDocument" in booking and booking["eventDocument"]:
+                    booking["eventDocument"] = f"http://127.0.0.1:5000/uploads/{booking['eventDocument']}"
+                else:
+                    booking["eventDocument"] = None  
 
             total_completed_bookings[hall_name] = bookings
 
@@ -365,6 +378,7 @@ def get_total_completed_bookings():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
     
 @app.route("/bookings", methods=["GET"])
