@@ -252,7 +252,8 @@ def upload_details():
 
         # Debug logs (will show in Render logs)
         print("---- DEBUG /upload_details ----")
-        print("booking_id:", booking_id)
+        print("bookingId received:", booking_id)
+
         print("hall_name:", hall_name)
         print("extra_details:", extra_details)
         print("files:", request.files.keys())
@@ -297,6 +298,19 @@ def upload_details():
 
         if update_result.modified_count == 0:
             return jsonify({"success": False, "message": "Booking not found or update failed"}), 500
+        if not booking_id:
+    return jsonify({"success": False, "message": "Booking ID missing"}), 400
+if not hall_name:
+    return jsonify({"success": False, "message": "Hall name missing"}), 400
+if not extra_details:
+    return jsonify({"success": False, "message": "Extra details missing"}), 400
+if not photo_file:
+    return jsonify({"success": False, "message": "Photo file missing"}), 400
+if not geotag_file:
+    return jsonify({"success": False, "message": "Geotag photo missing"}), 400
+if not event_doc_file:
+    return jsonify({"success": False, "message": "Event doc missing"}), 400
+
 
         return jsonify({"success": True, "message": "Details uploaded and status updated successfully!"})
 
