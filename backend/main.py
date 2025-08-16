@@ -357,17 +357,17 @@ def get_total_completed_bookings():
 
                 # Ensure all media paths (2 images + 1 PDF) are correctly formatted
                 if "imagePath1" in booking and booking["imagePath1"]:
-                    booking["imagePath1"] = f"http://127.0.0.1:5000/uploads/{booking['imagePath1']}"
+                    booking["imagePath1"] = f"http://all-6.onrender.com/uploads/{booking['imagePath1']}"
                 else:
                     booking["imagePath1"] = None
 
                 if "imagePath2" in booking and booking["imagePath2"]:
-                    booking["imagePath2"] = f"http://127.0.0.1:5000/uploads/{booking['imagePath2']}"
+                    booking["imagePath2"] = f"http://all-6.onrender.com/uploads/{booking['imagePath2']}"
                 else:
                     booking["imagePath2"] = None
 
                 if "pdfPath" in booking and booking["pdfPath"]:
-                    booking["pdfPath"] = f"http://127.0.0.1:5000/uploads/{booking['pdfPath']}"
+                    booking["pdfPath"] = f"http://all-6.onrender.com/uploads/{booking['pdfPath']}"
                 else:
                     booking["pdfPath"] = None
 
