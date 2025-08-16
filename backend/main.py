@@ -295,11 +295,21 @@ def upload_details():
 
         # ✅ Update booking in DB
         collection = hall_collections[hall_name]
-        if not collection:
-            return jsonify({
-                "success": True,
-                "message": "Files uploaded, but no DB collection linked (hall_collections not set)"
-            }), 200
+        if collection is not None:
+    # proceed with your logic
+            result = collection.update_one(
+                {"_id": ObjectId(bookingId)},
+                {"$set": {
+                    "extra_details": extra_details,
+                    "photo": photo_filename,
+                    "geotagPhoto": geotag_filename,
+                    "eventDoc": eventdoc_filename
+                }}
+            )
+    return jsonify({"message": "Details uploaded successfully"})
+else:
+    return jsonify({"error": "Invalid hall name"}), 400
+
 
         update_result = collection.update_one(
             {"_id": booking_object_id},
