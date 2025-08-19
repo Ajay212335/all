@@ -241,6 +241,14 @@ def get_completed_bookings():
 
 app.config["UPLOAD_FOLDER"] = os.path.join(os.getcwd(), "uploads")
 
+
+@app.route("/get_completed", methods=["GET"])
+def get_completed():
+    completed = list(collection.find({"status": "Completed"}))  
+    for item in completed:
+        item["_id"] = str(item["_id"])
+    return jsonify(completed)
+
 @app.route("/upload_details", methods=["POST"])
 def upload_details():
     try:
