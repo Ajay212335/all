@@ -245,17 +245,24 @@ app.config["UPLOAD_FOLDER"] = os.path.join(os.getcwd(), "uploads")
 @app.route("/get_completed", methods=["GET"])
 def get_completed():
     try:
-        completed_bookings = {}
+        # Get department from query params
+        department = request.args.get("department", None)
 
-        for hall_name, collection in hall_collections.items():
-            bookings = list(collection.find({"status": "Total Completed"}))
+        query = {"status": "Total Completed"}
+        if department:
+            query["department"] = department
 
-            for booking in bookings:
-                booking["_id"] = str(booking["_id"])
+        completed = list(collection.find(query))
 
-            completed_bookings[hall_name] = bookings  # store per hall
+        for item in completed:
+            item["_id"] = str(item["_id"])
+            if "department" not in item:
+                item["department"] = "Unknown"
 
-        return jsonify(completed_bookings)
+        total_count = len(completed)
+
+        return jsonify({"total": total_count, "bookings": completed})
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
