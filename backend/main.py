@@ -244,7 +244,7 @@ app.config["UPLOAD_FOLDER"] = os.path.join(os.getcwd(), "uploads")
 
 @app.route("/get_completed", methods=["GET"])
 def get_completed():
-    completed = list(collection.find({"status": "Completed"}))  
+    completed = list(collection.find({"status": "Total Completed"}))  
     for item in completed:
         item["_id"] = str(item["_id"])
     return jsonify(completed)
