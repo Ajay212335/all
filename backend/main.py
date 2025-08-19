@@ -244,16 +244,20 @@ app.config["UPLOAD_FOLDER"] = os.path.join(os.getcwd(), "uploads")
 
 @app.route("/get_completed", methods=["GET"])
 def get_completed():
-    department = request.args.get("department")  # from URL
-    query = {"status": {"$regex": "^Total Completed$", "$options": "i"}}
+    try:
+        completed_bookings = {}
 
-    if department:  
-        query["department"] = department  
+        for hall_name, collection in hall_collections.items():
+            bookings = list(collection.find({"status": "Total Completed"}))
 
-    completed = list(collection.find(query))
-    for item in completed:
-        item["_id"] = str(item["_id"])
-    return jsonify(completed)
+            for booking in bookings:
+                booking["_id"] = str(booking["_id"])
+
+            completed_bookings[hall_name] = bookings  # store per hall
+
+        return jsonify(completed_bookings)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/upload_details", methods=["POST"])
