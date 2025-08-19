@@ -244,10 +244,17 @@ app.config["UPLOAD_FOLDER"] = os.path.join(os.getcwd(), "uploads")
 
 @app.route("/get_completed", methods=["GET"])
 def get_completed():
-    completed = list(collection.find({"status": "Total Completed"}))  
+    department = request.args.get("department")  # from URL
+    query = {"status": {"$regex": "^Total Completed$", "$options": "i"}}
+
+    if department:  
+        query["department"] = department  
+
+    completed = list(collection.find(query))
     for item in completed:
         item["_id"] = str(item["_id"])
     return jsonify(completed)
+
 
 @app.route("/upload_details", methods=["POST"])
 def upload_details():
