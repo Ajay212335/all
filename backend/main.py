@@ -246,6 +246,9 @@ def get_completed_bookings():
 
 app.config["UPLOAD_FOLDER"] = os.path.join(os.getcwd(), "uploads")
 
+# ✅ Ensure uploads folder exists at startup
+os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+
 
 @app.route("/upload_details", methods=["POST"])
 def upload_details():
@@ -289,9 +292,7 @@ def upload_details():
         if collection is None:
             return jsonify({"success": False, "message": "No DB collection linked for this hall"}), 400
 
-        # ✅ Save uploaded files
-        os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
-
+        # ✅ Save uploaded files with secure names
         photo_filename = secure_filename(photo_file.filename)
         geotag_filename = secure_filename(geotag_file.filename)
         doc_filename = secure_filename(event_doc_file.filename)
@@ -305,7 +306,7 @@ def upload_details():
         event_doc_file.save(doc_path)
 
         # ✅ Generate accessible URLs
-        server_url = request.host_url.rstrip("/")  # e.g. http://localhost:5000
+        server_url = request.host_url.rstrip("/")  # e.g. http://localhost:5000 or https://all-6.onrender.com
         photo_url = f"{server_url}/uploads/{photo_filename}"
         geotag_url = f"{server_url}/uploads/{geotag_filename}"
         doc_url = f"{server_url}/uploads/{doc_filename}"
@@ -344,9 +345,14 @@ def upload_details():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+# ✅ Serve uploaded files (static route)
 @app.route("/uploads/<path:filename>")
 def uploaded_file(filename):
-    return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
+    try:
+        return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
+    except FileNotFoundError:
+        return jsonify({"error": f"File not found: {filename}"}), 404
+
 
 
 @app.route("/total_completed_bookings", methods=["GET"])
