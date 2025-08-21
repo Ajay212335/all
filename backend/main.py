@@ -27,8 +27,10 @@ app = Flask(__name__)
 app = Flask(__name__)
 CORS(app)
 
-app.config["UPLOAD_FOLDER"] = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+app.config["UPLOAD_FOLDER"] = os.path.join(BASE_DIR, "uploads")
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+
 
 MONGO_URI = "mongodb+srv://ddarn3681:eyl349H2RkqaraZb@cluster0.ezhvpef.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 
@@ -339,8 +341,7 @@ def upload_details():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-# ✅ Serve uploaded files
-@app.route("/uploads/<filename>")
+@app.route("/uploads/<path:filename>")
 def uploaded_file(filename):
     return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
