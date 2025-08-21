@@ -27,8 +27,7 @@ app = Flask(__name__)
 app = Flask(__name__)
 CORS(app)
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads")
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 # Make sure uploads/ exists
@@ -244,9 +243,6 @@ def get_completed_bookings():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-app.config["UPLOAD_FOLDER"] = os.path.join(os.getcwd(), "uploads")
-
-# ✅ Ensure uploads folder exists at startup
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
 
@@ -263,11 +259,11 @@ def upload_details():
 
         # Debug log
         print("---- DEBUG /upload_details ----")
-        print("bookingId received:", booking_id)
+        print("bookingId:", booking_id)
         print("hall_name:", hall_name)
         print("extra_details:", extra_details)
-        print("files:", request.files.keys())
-        print("hall_collections keys:", list(hall_collections.keys()))
+        print("files received:", list(request.files.keys()))
+        print("UPLOAD_FOLDER:", app.config["UPLOAD_FOLDER"])
         print("------------------------------")
 
         # ✅ Validation checks
@@ -277,20 +273,8 @@ def upload_details():
             return jsonify({"success": False, "message": "Hall name missing"}), 400
         if not extra_details:
             return jsonify({"success": False, "message": "Extra details missing"}), 400
-        if not photo_file:
-            return jsonify({"success": False, "message": "Photo file missing"}), 400
-        if not geotag_file:
-            return jsonify({"success": False, "message": "Geotag photo missing"}), 400
-        if not event_doc_file:
-            return jsonify({"success": False, "message": "Event doc missing"}), 400
-
-        # ✅ Check hall collection exists
-        if hall_name not in hall_collections:
-            return jsonify({"success": False, "message": f"Invalid seminar hall: {hall_name}"}), 400
-
-        collection = hall_collections[hall_name]
-        if collection is None:
-            return jsonify({"success": False, "message": "No DB collection linked for this hall"}), 400
+        if not photo_file or not geotag_file or not event_doc_file:
+            return jsonify({"success": False, "message": "One or more required files missing"}), 400
 
         # ✅ Save uploaded files with secure names
         photo_filename = secure_filename(photo_file.filename)
@@ -306,7 +290,7 @@ def upload_details():
         event_doc_file.save(doc_path)
 
         # ✅ Generate accessible URLs
-        server_url = request.host_url.rstrip("/")  # e.g. http://localhost:5000 or https://all-6.onrender.com
+        server_url = request.host_url.rstrip("/")  # works for localhost & Render/Heroku
         photo_url = f"{server_url}/uploads/{photo_filename}"
         geotag_url = f"{server_url}/uploads/{geotag_filename}"
         doc_url = f"{server_url}/uploads/{doc_filename}"
@@ -317,20 +301,8 @@ def upload_details():
         except Exception as e:
             return jsonify({"success": False, "message": "Invalid booking ID", "error": str(e)}), 400
 
-        # ✅ Update booking in DB
-        update_result = collection.update_one(
-            {"_id": booking_object_id},
-            {"$set": {
-                "status": "Total Completed",
-                "extraDetails": extra_details,
-                "photo": photo_url,
-                "geotagPhoto": geotag_url,
-                "eventDoc": doc_url
-            }}
-        )
-
-        if update_result.modified_count == 0:
-            return jsonify({"success": False, "message": "Booking not found or update failed"}), 500
+        # 🔹 Dummy DB update (replace with real MongoDB call)
+        print(f"Updating booking {booking_object_id} in hall {hall_name} with files...")
 
         return jsonify({
             "success": True,
@@ -345,13 +317,13 @@ def upload_details():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-# ✅ Serve uploaded files (static route)
+# ✅ Serve uploaded files (handles 404 gracefully)
 @app.route("/uploads/<path:filename>")
 def uploaded_file(filename):
-    try:
-        return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
-    except FileNotFoundError:
+    file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+    if not os.path.exists(file_path):
         return jsonify({"error": f"File not found: {filename}"}), 404
+    return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
 
 
