@@ -246,6 +246,9 @@ def get_completed_bookings():
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
 
+app.config["UPLOAD_FOLDER"] = os.path.join(os.getcwd(), "uploads")
+
+
 @app.route("/upload_details", methods=["POST"])
 def upload_details():
     try:
@@ -259,11 +262,11 @@ def upload_details():
 
         # Debug log
         print("---- DEBUG /upload_details ----")
-        print("bookingId:", booking_id)
+        print("bookingId received:", booking_id)
         print("hall_name:", hall_name)
         print("extra_details:", extra_details)
-        print("files received:", list(request.files.keys()))
-        print("UPLOAD_FOLDER:", app.config["UPLOAD_FOLDER"])
+        print("files:", request.files.keys())
+        print("hall_collections keys:", list(hall_collections.keys()))
         print("------------------------------")
 
         # ✅ Validation checks
@@ -273,10 +276,26 @@ def upload_details():
             return jsonify({"success": False, "message": "Hall name missing"}), 400
         if not extra_details:
             return jsonify({"success": False, "message": "Extra details missing"}), 400
-        if not photo_file or not geotag_file or not event_doc_file:
-            return jsonify({"success": False, "message": "One or more required files missing"}), 400
+        if not photo_file:
+            return jsonify({"success": False, "message": "Photo file missing"}), 400
+        if not geotag_file:
+            return jsonify({"success": False, "message": "Geotag photo missing"}), 400
+        if not event_doc_file:
+            return jsonify({"success": False, "message": "Event doc missing"}), 400
 
-        # ✅ Save uploaded files with secure names
+        # ✅ Check hall collection exists
+        if hall_name not in hall_collections:
+            return jsonify({"success": False, "message": f"Invalid seminar hall: {hall_name}"}), 400
+
+        collection = hall_collections[hall_name]
+        if collection is None:
+            return jsonify({"success": False, "message": "No DB collection linked for this hall"}), 400
+
+        # ✅ Save uploaded files
+        os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+
+
+
         photo_filename = secure_filename(photo_file.filename)
         geotag_filename = secure_filename(geotag_file.filename)
         doc_filename = secure_filename(event_doc_file.filename)
@@ -290,7 +309,7 @@ def upload_details():
         event_doc_file.save(doc_path)
 
         # ✅ Generate accessible URLs
-        server_url = request.host_url.rstrip("/")  # works for localhost & Render/Heroku
+        server_url = request.host_url.rstrip("/")  # e.g. http://localhost:5000
         photo_url = f"{server_url}/uploads/{photo_filename}"
         geotag_url = f"{server_url}/uploads/{geotag_filename}"
         doc_url = f"{server_url}/uploads/{doc_filename}"
@@ -301,8 +320,20 @@ def upload_details():
         except Exception as e:
             return jsonify({"success": False, "message": "Invalid booking ID", "error": str(e)}), 400
 
-        # 🔹 Dummy DB update (replace with real MongoDB call)
-        print(f"Updating booking {booking_object_id} in hall {hall_name} with files...")
+        # ✅ Update booking in DB
+        update_result = collection.update_one(
+            {"_id": booking_object_id},
+            {"$set": {
+                "status": "Total Completed",
+                "extraDetails": extra_details,
+                "photo": photo_url,
+                "geotagPhoto": geotag_url,
+                "eventDoc": doc_url
+            }}
+        )
+
+        if update_result.modified_count == 0:
+            return jsonify({"success": False, "message": "Booking not found or update failed"}), 500
 
         return jsonify({
             "success": True,
@@ -315,7 +346,6 @@ def upload_details():
     except Exception as e:
         print("ERROR in /upload_details:", str(e))
         return jsonify({"success": False, "error": str(e)}), 500
-
 
 # ✅ Serve uploaded files (handles 404 gracefully)
 @app.route("/uploads/<path:filename>")
