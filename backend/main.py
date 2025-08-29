@@ -55,16 +55,16 @@ COORDINATOR_EMAIL = "coordinator@example.com"  # Replace with actual coordinator
 APPROVED_EMAILS = ["ajaiks2005@gmail.com", "tm07hariharan2122@gmail.com", "ajaisha2021@gmail.com"]
 
 users = {
-    "kncet@principal": {"password": bcrypt.hashpw("principal@123".encode('utf-8'), bcrypt.gensalt()).decode('utf-8'), "role": "principal"},
-    "hod.it@kncet": {"password": bcrypt.hashpw("hodit@123".encode('utf-8'), bcrypt.gensalt()).decode('utf-8'), "role": "hod", "department": "IT"},
-    "hod.cse@kncet": {"password": bcrypt.hashpw("hodcse@123".encode('utf-8'), bcrypt.gensalt()).decode('utf-8'), "role": "hod", "department": "CSE"},
-    "hod.ece@kncet": {"password": bcrypt.hashpw("hodece@123".encode('utf-8'), bcrypt.gensalt()).decode('utf-8'), "role": "hod", "department": "ECE"},
-    "hod.eee@kncet": {"password": bcrypt.hashpw("hodeee@123".encode('utf-8'), bcrypt.gensalt()).decode('utf-8'), "role": "hod", "department": "EEE"},
-    "hod.civil@kncet": {"password": bcrypt.hashpw("hodcivil@123".encode('utf-8'), bcrypt.gensalt()).decode('utf-8'), "role": "hod", "department": "Civil"},
-    "hod.bme@kncet": {"password": bcrypt.hashpw("hodbme@123".encode('utf-8'), bcrypt.gensalt()).decode('utf-8'), "role": "hod", "department": "BME"},
-    "hod.agri@kncet": {"password": bcrypt.hashpw("hodagri@123".encode('utf-8'), bcrypt.gensalt()).decode('utf-8'), "role": "hod", "department": "Agri"},
-    "hod.ads@kncet": {"password": bcrypt.hashpw("hodads@123".encode('utf-8'), bcrypt.gensalt()).decode('utf-8'), "role": "hod", "department": "ADS"},
-    "hod.mech@kncet": {"password": bcrypt.hashpw("hodmech@123".encode('utf-8'), bcrypt.gensalt()).decode('utf-8'), "role": "hod", "department": "Mech"},
+    "principal@kncet": {"password": bcrypt.hashpw("kncet@principal".encode('utf-8'), bcrypt.gensalt()).decode('utf-8'), "role": "principal"},
+    "hodit@kncet": {"password": bcrypt.hashpw("kncet@hodit".encode('utf-8'), bcrypt.gensalt()).decode('utf-8'), "role": "hod", "department": "IT"},
+    "hodcse@kncet": {"password": bcrypt.hashpw("kncet@hodcse".encode('utf-8'), bcrypt.gensalt()).decode('utf-8'), "role": "hod", "department": "CSE"},
+    "hodece@kncet": {"password": bcrypt.hashpw("kncet@hodece".encode('utf-8'), bcrypt.gensalt()).decode('utf-8'), "role": "hod", "department": "ECE"},
+    "hodeee@kncet": {"password": bcrypt.hashpw("kncet@hodeee".encode('utf-8'), bcrypt.gensalt()).decode('utf-8'), "role": "hod", "department": "EEE"},
+    "hodcivil@kncet": {"password": bcrypt.hashpw("kncet@hodcivil".encode('utf-8'), bcrypt.gensalt()).decode('utf-8'), "role": "hod", "department": "Civil"},
+    "hodbme@kncet": {"password": bcrypt.hashpw("kncet@hodbme".encode('utf-8'), bcrypt.gensalt()).decode('utf-8'), "role": "hod", "department": "BME"},
+    "hodagri@kncet": {"password": bcrypt.hashpw("kncet@hodagri".encode('utf-8'), bcrypt.gensalt()).decode('utf-8'), "role": "hod", "department": "Agri"},
+    "hodads@kncet": {"password": bcrypt.hashpw("kncet@hodads".encode('utf-8'), bcrypt.gensalt()).decode('utf-8'), "role": "hod", "department": "ADS"},
+    "hodmech@kncet": {"password": bcrypt.hashpw("kncet@hodmech".encode('utf-8'), bcrypt.gensalt()).decode('utf-8'), "role": "hod", "department": "Mech"},
 }
 
 @app.route('/login', methods=['POST'])
