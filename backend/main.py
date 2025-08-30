@@ -355,25 +355,6 @@ def uploaded_file(filename):
         return jsonify({"error": f"File not found: {filename}"}), 404
     return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
-@app.route("/getcompleted_bookings", methods=["GET"])
-def get_completed():
-    try:
-        completed_bookings = {}
-        for hall_name, collection in hall_collections.items():
-            # fetch ONLY "Total Completed" bookings
-            bookings = list(collection.find({"status": {"$eq": "Total Completed"}}))
-            
-            # Convert ObjectId to string for JSON
-            for booking in bookings:
-                booking["_id"] = str(booking["_id"])
-            
-            completed_bookings[hall_name] = bookings
-
-        return jsonify(completed_bookings)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
 
 
 @app.route("/total_completed_bookings", methods=["GET"])
